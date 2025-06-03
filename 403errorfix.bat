@@ -17,9 +17,10 @@ cls
 echo ===================================================
 echo                  Roblox 403 Fix Utility
 echo                 Made by Zulquix on discord
-echo     https://github.com/zulquix/roblox-api-ban-bypass/upload
+echo    https://github.com/zulquix/roblox-api-ban-bypass/blob/main/403errorfix.bat
 echo ===================================================
 echo.
+
 
 
 set "status_dns=Pending"
