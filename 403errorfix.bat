@@ -1,34 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: === Auto Update Check ===
-set "scriptPath=%~f0"
-set "latestPath=%TEMP%\latest403fix.bat"
-set "rawURL=https://raw.githubusercontent.com/zulquix/roblox-api-ban-bypass/main/403errorfix.bat"
-
-echo Checking for updates...
-powershell -Command "Invoke-WebRequest -Uri '%rawURL%' -OutFile '%latestPath%'" >nul 2>&1
-
-if not exist "%latestPath%" (
-    echo Failed to check for updates. Continuing with current version...
-    goto uac_check
-)
-
-powershell -Command ^
-    "if ((Get-Content -Raw '%scriptPath%').Replace('`r','') -ne (Get-Content -Raw '%latestPath%').Replace('`r','')) { exit 1 }"
-if errorlevel 1 (
-
-    echo Update found. Replacing current version...
-    timeout /t 2 >nul
-    copy /y "%latestPath%" "%scriptPath%" >nul
-    start "" "%scriptPath%"
-    exit /b
-) else (
-    echo You are on the latest version.
-    del "%latestPath%" >nul 2>&1
-)
-
-:uac_check
 fltmc >nul 2>&1 || (
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\admin.vbs"
     echo UAC.ShellExecute "cmd.exe", "/c ""%~s0""", "", "runas", 1 >> "%temp%\admin.vbs"
@@ -45,21 +17,19 @@ set "reset=%ESC%[0m"
 cls
 echo ===================================================
 echo                  Roblox 403 Fix Utility
-echo                 Made by Zulquix on discord
+echo                 Made by Zulquix on Discord
 echo    https://github.com/zulquix/roblox-api-ban-bypass/blob/main/403errorfix.bat
 echo ===================================================
 echo.
 
-set "status_dns=Pending"
-set "status_timesync=Pending"
-set "status_cache=Pending"
-set "status_robloxcache=Pending"
-set "status_dnscache=Pending"
-set "status_macsafe=Skipped"
-set "status_adapter=NotFound"
-set "status_macapply=Failed"
-set "mac="
+choice /m "Open Github?"
+if errorlevel 2 goto skip_update
+start https://github.com/zulquix/roblox-api-ban-bypass/blob/main/403errorfix.bat
+exit /b
+:skip_update
 
+echo.
+echo.
 echo [1/6] Flushing DNS cache...
 ipconfig /flushdns >nul 2>&1
 if errorlevel 1 (
@@ -128,11 +98,7 @@ if errorlevel 1 (
 
 echo.
 choice /m "Would you like to spoof your MAC address to get rid of API ban?"
-
-if errorlevel 2 (
-    set "status_macsafe=Skipped by user"
-    goto reinstall_prompt
-)
+if errorlevel 2 goto skip_mac
 
 echo [6/6] Generating safe random MAC address...
 set "hex=0123456789ABCDEF"
@@ -147,13 +113,13 @@ for /f "tokens=2 delims==" %%A in (
   'wmic nic where "NetEnabled=true and (AdapterTypeID=0 or AdapterTypeID=9)" get Name /value ^| find "="'
 ) do (
     set "adapterName=%%A"
-    goto applyMAC
+    goto apply_mac
 )
 
 set "status_adapter=Not found"
-goto reinstall_prompt
+goto skip_mac
 
-:applyMAC
+:apply_mac
 set "adapterName=%adapterName:~0,-1%"
 set "status_adapter=Found (%adapterName%)"
 echo %gray%[summary] Adapter: %adapterName%%reset%
@@ -166,7 +132,7 @@ for /f "tokens=2 delims==" %%A in (
 
 if not defined devID (
     set "status_macapply=DeviceID not found"
-    goto reinstall_prompt
+    goto skip_mac
 )
 
 set "regKey=HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}\%devID%"
@@ -175,7 +141,7 @@ echo Applying MAC to registry...
 reg add "%regKey%" /v NetworkAddress /d !mac! /f >nul 2>&1
 if errorlevel 1 (
     set "status_macapply=Registry update failed"
-    goto reinstall_prompt
+    goto skip_mac
 ) else (
     set "status_macapply=Registry updated"
 )
@@ -190,14 +156,11 @@ if errorlevel 1 (
     set "status_macapply=Adapter restarted"
 )
 
-:reinstall_prompt
+:skip_mac
+
 echo.
 choice /m "Would you like to reinstall Roblox automatically?"
-
-if errorlevel 2 (
-    echo %gray%[summary] Roblox reinstall skipped by user.%reset%
-    goto done_summary
-)
+if errorlevel 2 goto done_summary
 
 powershell -Command "Get-AppxPackage *Roblox* | Remove-AppxPackage" >nul 2>&1
 timeout /t 5 >nul
@@ -221,5 +184,6 @@ echo.
 echo %gray%===================================================
 echo Successfully completed. You can now try using Roblox.
 echo ===================================================
+echo %reset%
 pause
 exit
