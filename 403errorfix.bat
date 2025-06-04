@@ -1,4 +1,32 @@
 @echo off
+setlocal EnableDelayedExpansion
+
+:: === Auto Update Check ===
+set "scriptPath=%~f0"
+set "latestPath=%TEMP%\latest403fix.bat"
+set "rawURL=https://raw.githubusercontent.com/zulquix/roblox-api-ban-bypass/main/403errorfix.bat"
+
+echo Checking for updates...
+powershell -Command "Invoke-WebRequest -Uri '%rawURL%' -OutFile '%latestPath%'" >nul 2>&1
+
+if not exist "%latestPath%" (
+    echo Failed to check for updates. Continuing with current version...
+    goto uac_check
+)
+
+fc /b "%scriptPath%" "%latestPath%" >nul
+if errorlevel 1 (
+    echo Update found. Replacing current version...
+    timeout /t 2 >nul
+    copy /y "%latestPath%" "%scriptPath%" >nul
+    start "" "%scriptPath%"
+    exit /b
+) else (
+    echo You are on the latest version.
+    del "%latestPath%" >nul 2>&1
+)
+
+:uac_check
 fltmc >nul 2>&1 || (
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\admin.vbs"
     echo UAC.ShellExecute "cmd.exe", "/c ""%~s0""", "", "runas", 1 >> "%temp%\admin.vbs"
@@ -7,8 +35,7 @@ fltmc >nul 2>&1 || (
     exit /b
 )
 
-setlocal EnableDelayedExpansion
-
+set "ESC="
 for /f %%c in ('echo prompt $E ^| cmd') do set "ESC=%%c"
 set "gray=%ESC%[90m"
 set "reset=%ESC%[0m"
@@ -20,8 +47,6 @@ echo                 Made by Zulquix on discord
 echo    https://github.com/zulquix/roblox-api-ban-bypass/blob/main/403errorfix.bat
 echo ===================================================
 echo.
-
-
 
 set "status_dns=Pending"
 set "status_timesync=Pending"
@@ -190,23 +215,9 @@ timeout /t 3 >nul
 
 :done_summary
 echo.
-echo ===================================================
-echo                    CHANGE LOG
-echo ===================================================
 echo.
-echo [DNS Flush] ...................... %status_dns%
-echo [Time Sync] ...................... %status_timesync%
-echo [Internet Cache Clear] ........... %status_cache%
-echo [Roblox Cache Delete] ............ %status_robloxcache%
-echo [DNS Client Restart] ............. %status_dnscache%
-echo [MAC Spoofing] ................... %status_macsafe%
-if not "%mac%"=="" (
-    echo [Network Adapter] ............... %status_adapter%
-    echo [MAC Apply] ..................... %status_macapply%
-    echo [New MAC Address] ............... !mac!
-)
-echo ---------------------------------------------------
-echo Completed at %TIME% on %DATE%
+echo %gray%===================================================
+echo Successfully completed. You can now try using Roblox.
 echo ===================================================
 pause
 exit
