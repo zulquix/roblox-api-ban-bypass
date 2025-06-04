@@ -14,8 +14,10 @@ if not exist "%latestPath%" (
     goto uac_check
 )
 
-fc /b "%scriptPath%" "%latestPath%" >nul
+powershell -Command ^
+    "if ((Get-Content -Raw '%scriptPath%').Replace('`r','') -ne (Get-Content -Raw '%latestPath%').Replace('`r','')) { exit 1 }"
 if errorlevel 1 (
+
     echo Update found. Replacing current version...
     timeout /t 2 >nul
     copy /y "%latestPath%" "%scriptPath%" >nul
