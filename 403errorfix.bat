@@ -24,7 +24,7 @@ powershell -Command "Invoke-WebRequest -Uri '%remoteUrl%' -OutFile '%tempRemote%
 copy /y "%scriptPath%" "%tempCurrent%" >nul 2>&1
 
 fc "%tempCurrent%" "%tempRemote%" >nul
-if errorlevel 1 (
+if %errorlevel%==1 (
     echo New version detected. Updating script...
     timeout /t 2 >nul
     copy /y "%tempRemote%" "%scriptPath%" >nul 2>&1
