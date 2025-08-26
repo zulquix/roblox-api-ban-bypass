@@ -15,24 +15,35 @@ fltmc >nul 2>&1 || (
 )
 
 set "remoteUrl=https://raw.githubusercontent.com/zulquix/roblox-api-ban-bypass/main/403errorfix.bat"
-set "tempRemote=%TEMP%\\403errorfix_remote.bat"
-set "tempCurrent=%TEMP%\\403errorfix_local.bat"
+set "tempRemote=%TEMP%\403errorfix_remote.bat"
+set "tempCurrent=%TEMP%\403errorfix_local.bat"
 set "scriptPath=%~f0"
 
+:: Download latest script version to temp file silently
 powershell -Command "Invoke-WebRequest -Uri '%remoteUrl%' -OutFile '%tempRemote%'" >nul 2>&1
 
+:: Copy current running script to temp
 copy /y "%scriptPath%" "%tempCurrent%" >nul 2>&1
 
+:: Compare current and remote files, if different errorlevel=1
 fc "%tempCurrent%" "%tempRemote%" >nul
+
 if %errorlevel%==1 (
     echo New version detected. Updating script...
     timeout /t 2 >nul
+
+    :: Overwrite the running script file with the downloaded newest version
     copy /y "%tempRemote%" "%scriptPath%" >nul 2>&1
+
     echo Update finished. Restarting...
     timeout /t 2 >nul
+
+    :: Start the updated script and exit current instance
     start "" "%scriptPath%"
     exit /b
 )
+
+:: Clean up temp files
 del "%tempRemote%" >nul 2>&1
 del "%tempCurrent%" >nul 2>&1
 
@@ -45,6 +56,7 @@ set "reset=%ESC%[0m"
 set "ok=[ OK ]"
 set "fail=[FAIL]"
 set "warn=[WARN]"
+
 cls
 echo %gray%===================================================%reset%
 echo       %yellow%Roblox 403 Error Fix Utility%reset%
@@ -71,7 +83,7 @@ RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 255 >nul 2>&1
 if errorlevel 1 (echo %red%%fail%%reset% Failed to clear internet cache.) else (echo %green%%ok%%reset% Internet cache cleared.)
 
 echo [4/6] Deleting Roblox cache...
-set "RobloxPath=%LOCALAPPDATA%\\Roblox"
+set "RobloxPath=%LOCALAPPDATA%\Roblox"
 if exist "%RobloxPath%" (
     rmdir /s /q "%RobloxPath%" >nul 2>&1
     if errorlevel 1 (echo %red%%fail%%reset% Roblox cache deletion failed.) else (echo %green%%ok%%reset% Roblox cache deleted.)
@@ -114,7 +126,7 @@ echo %red%%fail%%reset% No active network adapter found.
 goto skip_mac
 
 :mac_adapter_found
-set "regKey=HKLM\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\%devID%"
+set "regKey=HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}\%devID%"
 reg add "%regKey%" /v NetworkAddress /d !mac! /f >nul 2>&1
 if errorlevel 1 (echo %red%%fail%%reset% Failed to write MAC to registry.) else (echo %green%%ok%%reset% MAC set to !mac!)
 wmic path win32_networkadapter where "DeviceID='%devID%'" call disable >nul
@@ -131,7 +143,7 @@ if errorlevel 1 goto reinstall_roblox
 :reinstall_roblox
 powershell -Command "Get-AppxPackage *Roblox* | Remove-AppxPackage" >nul 2>&1
 timeout /t 3 >nul
-set "robloxInstaller=%TEMP%\\RobloxPlayerLauncher.exe"
+set "robloxInstaller=%TEMP%\RobloxPlayerLauncher.exe"
 powershell -Command "Invoke-WebRequest -Uri 'https://setup.rbxcdn.com/RobloxPlayerLauncher.exe' -OutFile '%robloxInstaller%'" >nul 2>&1
 if exist "%robloxInstaller%" (
     start "" "%robloxInstaller%"
